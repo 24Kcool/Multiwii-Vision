@@ -1,4 +1,4 @@
-#include "Arduino.h"
+9#include "Arduino.h"
 #include "config.h"
 #include "def.h"
 #include "types.h"
@@ -300,7 +300,7 @@ uint8_t getEstimatedAltitude(){
   static uint16_t previousT;
   uint16_t currentT = micros();
   uint16_t dTime;
-  //static int32_t tmpEstAlt = 0; //in cm 用于替换原气压高度的LPF运算，方便与超声波读数切换
+  static int32_t tmpEstAlt = 0; //in cm 用于替换原气压高度的LPF运算，方便与超声波读数切换
 
   dTime = currentT - previousT;
   if (dTime < UPDATE_INTERVAL) return 0;
@@ -325,6 +325,16 @@ uint8_t getEstimatedAltitude(){
 //  else {
 //	  alt.EstAlt = tmpEstAlt; //来自气压计的值
 //  }
+  if ((sonarAlt > 0 && sonarAlt < 350) ||
+	  ((att.angle[ROLL] > -90 && att.angle[ROLL] < 90) && (att.angle[PITCH] > -90 && att.angle[PITCH] < 90)))
+  {
+	  // actual alt = sonarAlt * cos(att.angle[ROLL]) * cos(att.angle[PITCH])
+	  int32_t actualAlt = abs((int32_t)sonarAlt * (_cos10(att.angle[ROLL]) * _cos10(att.angle[PITCH]) >> 8));
+	  alt.EstAlt = actualAlt >> 12;
+	  alt.EstAlt -= 19;
+  }
+  else
+	  alt.EstAlt = tmpEstAlt;
 
   #if (defined(VARIOMETER) && (VARIOMETER != 2)) || !defined(SUPPRESS_BARO_ALTHOLD)
     //P
