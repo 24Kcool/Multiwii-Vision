@@ -292,6 +292,17 @@ void getEstimatedAttitude(){
     value += deadband;                  \
   }
 
+int32_t _cos10(int16_t x){
+  // x within [-1800, 1800]
+  int32_t radTemp = (int32_t)x * 114; // rad = x * ((PI / 1800) << 16), rad within [-205200, 205200]
+  int32_t rad = radTemp >> 6; // rad ^ 2 within [-657922500, 657922500]
+
+  int32_t cos20 = ((uint32_t)1 << 20) - ((rad * rad) >> 1);
+  int32_t result = cos20 >> 10;
+
+  return result;
+}
+
 #if BARO
 uint8_t getEstimatedAltitude(){
   int32_t  BaroAlt;
@@ -300,7 +311,7 @@ uint8_t getEstimatedAltitude(){
   static uint16_t previousT;
   uint16_t currentT = micros();
   uint16_t dTime;
-  static int32_t tmpEstAlt = 0; //in cm 用于替换原气压高度的LPF运算，方便与超声波读数切换
+  static int32_t tmpEstAlt; //in cm 用于替换原气压高度的LPF运算，方便与超声波读数切换
 
   dTime = currentT - previousT;
   if (dTime < UPDATE_INTERVAL) return 0;
@@ -316,15 +327,16 @@ uint8_t getEstimatedAltitude(){
   // see: https://code.google.com/p/ardupilot-mega/source/browse/libraries/AP_Baro/AP_Baro.cpp
   BaroAlt = ( logBaroGroundPressureSum - log(baroPressureSum) ) * baroGroundTemperatureScale;
 
-  //tmpEstAlt = (tmpEstAlt * 6 + BaroAlt * 2) >> 3; 
-  alt.EstAlt = (alt.EstAlt * 6 + BaroAlt ) >> 3; // additional LPF to reduce baro noise (faster by 30 µs)
-  
-  //if (sonarAlt>0 && sonarAlt<300) {
-//	  alt.EstAlt = sonarAlt; //来自声呐的值
-//  }
-//  else {
-//	  alt.EstAlt = tmpEstAlt; //来自气压计的值
-//  }
+  tmpEstAlt = (tmpEstAlt * 6 + BaroAlt) >> 3; //有没有×2这个需要考虑
+  //alt.EstAlt = (alt.EstAlt * 6 + BaroAlt ) >> 3; // additional LPF to reduce baro noise (faster by 30 µs)
+  /*
+  if (sonarAlt > 0 && sonarAlt < 300){
+	  alt.EstAlt = sonarAlt; //来自声呐的值
+  }
+  else{
+	  alt.EstAlt = tmpEstAlt; //来自气压计的值
+  }
+  */
   if ((sonarAlt > 0 && sonarAlt < 350) ||
 	  ((att.angle[ROLL] > -90 && att.angle[ROLL] < 90) && (att.angle[PITCH] > -90 && att.angle[PITCH] < 90)))
   {

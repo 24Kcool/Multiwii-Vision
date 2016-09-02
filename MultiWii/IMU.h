@@ -9,5 +9,6 @@ uint8_t getEstimatedAltitude();
 
 void computeIMU();
 int32_t mul(int16_t a, int16_t b);
+int32_t _cos10(int16_t x);
 
 #endif /* IMU_H_ */
