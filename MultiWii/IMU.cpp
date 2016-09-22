@@ -40,7 +40,8 @@ void computeIMU () {
     gyroADCprevious[axis] = gyroADCinter[axis]>>1;
     if (!ACC) imu.accADC[axis]=0;
   }
-  #if defined(GYRO_SMOOTHING)
+  
+  #if defined(GYRO_SMOOTHING)    //Not defined
     static int16_t gyroSmooth[3] = {0,0,0};
     for (axis = 0; axis < 3; axis++) {
       imu.gyroData[axis] = (int16_t) ( ( (int32_t)((int32_t)gyroSmooth[axis] * (conf.Smoothing[axis]-1) )+imu.gyroData[axis]+1 ) / conf.Smoothing[axis]);
