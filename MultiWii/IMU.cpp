@@ -383,6 +383,15 @@ uint8_t getEstimatedAltitude(){
     applyDeadband(alt.vario, 5);
     BaroPID -= constrain(conf.pid[PIDALT].D8 * alt.vario >>4, -150, 150);
   #endif
+  
+#if defined(I2C_TEST)	
+#define I2C_TEST_ADDRESS 0x29;  //defined address 0x29,this is a unusity number,maybe.
+#define I2C_TEST_ALT 239; 	
+	uint8_t i2c_test_distance;
+	//i2c_test_distance = i2c_readReg(I2C_TEST_ADDRESS,I2C_TEST_ALT);
+	i2c_read_reg_to_buf(I2C_TEST_ADDRESS, I2C_TEST_ALT, (uint8_t*)&sonarAlt, 2);
+#endif
+
   return 1;
 }
 #endif //BARO
